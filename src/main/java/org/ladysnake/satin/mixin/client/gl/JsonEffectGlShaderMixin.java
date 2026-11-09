@@ -17,26 +17,20 @@
  */
 package org.ladysnake.satin.mixin.client.gl;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.shaders.Program;
+import java.util.List;
+import java.util.Map;
+import java.util.function.IntSupplier;
+import net.minecraft.client.renderer.EffectInstance;
 import org.ladysnake.satin.impl.SamplerAccess;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Accessor;
-import org.spongepowered.asm.mixin.injection.At;
-
-import java.util.List;
-import java.util.Map;
-import java.util.function.IntSupplier;
-import net.minecraft.client.renderer.EffectInstance;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceProvider;
 
 /**
- * Minecraft does not take into account domains when parsing a shader program.
- * These hooks redirect identifier instantiations to allow specifying a domain for shader files.
+ * Exposes the sampler map of a post-process effect to Satin. Modern Minecraft
+ * already understands namespaced shader program identifiers, so the old
+ * identifier-rewriting hooks from the Fabric version are no longer needed.
  */
 @Mixin(EffectInstance.class)
 public abstract class JsonEffectGlShaderMixin implements SamplerAccess {
@@ -59,39 +53,4 @@ public abstract class JsonEffectGlShaderMixin implements SamplerAccess {
     @Override
     @Accessor("samplerLocations")
     public abstract List<Integer> satin$getSamplerShaderLocs();
-
-    /**
-     * Fix identifier creation to allow different namespaces
-     */
-    @WrapOperation(
-            at = @At(
-                    value = "INVOKE",
-                    target = "net/minecraft/util/Identifier.ofVanilla (Ljava/lang/String;)Lnet/minecraft/util/Identifier;",
-                    ordinal = 0
-            ),
-            method = "<init>"
-    )
-    ResourceLocation constructProgramIdentifier(String arg, Operation<ResourceLocation> original, ResourceProvider unused, String id) {
-        if (!id.contains(":")) {
-            return original.call(arg);
-        }
-        ResourceLocation split = ResourceLocation.parse(id);
-        return ResourceLocation.fromNamespaceAndPath(split.getNamespace(), "shaders/program/" + split.getPath() + ".json");
-    }
-
-    @WrapOperation(
-            at = @At(
-                    value = "INVOKE",
-                    target = "net/minecraft/util/Identifier.ofVanilla (Ljava/lang/String;)Lnet/minecraft/util/Identifier;",
-                    ordinal = 0
-            ),
-            method = "getOrCreate"
-    )
-    private static ResourceLocation constructProgramIdentifier(String arg, Operation<ResourceLocation> original, ResourceProvider unused, Program.Type shaderType, String id) {
-        if (!arg.contains(":")) {
-            return original.call(arg);
-        }
-        ResourceLocation split = ResourceLocation.parse(id);
-        return ResourceLocation.fromNamespaceAndPath(split.getNamespace(), "shaders/program/" + split.getPath() + shaderType.getExtension());
-    }
 }
