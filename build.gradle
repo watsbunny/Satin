@@ -57,7 +57,8 @@ processResources {
 
 jar {
     manifest.attributes([
-            'MixinConfigs': 'mixins.satin.client.json'
+            'MixinConfigs': 'mixins.satin.client.json',
+            'Automatic-Module-Name': 'org.ladysnake.satin'
     ])
 }
 
