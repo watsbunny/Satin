@@ -19,10 +19,10 @@ package org.ladysnake.satin.mixin.client.gl;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.JsonHelper;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import org.ladysnake.satin.impl.CustomFormatFramebuffers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,12 +31,12 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-@Mixin(PostEffectProcessor.class)
+@Mixin(PostChain.class)
 public class CustomFormatPostEffectProcessorMixin {
 
-    @Inject(method = "parseTarget", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/PostEffectProcessor;addTarget(Ljava/lang/String;II)V", ordinal = 1), locals = LocalCapture.CAPTURE_FAILSOFT)
+    @Inject(method = "parseTargetNode", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/PostChain;addTempTarget(Ljava/lang/String;II)V", ordinal = 1), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void satin$parseCustomTargetFormat(JsonElement jsonTarget, CallbackInfo ci, JsonObject jsonObject) {
-        String format = JsonHelper.getString(jsonObject, CustomFormatFramebuffers.FORMAT_KEY, null);
+        String format = GsonHelper.getAsString(jsonObject, CustomFormatFramebuffers.FORMAT_KEY, null);
         if (format != null) {
             CustomFormatFramebuffers.prepareCustomFormat(format);
         }
@@ -46,18 +46,18 @@ public class CustomFormatPostEffectProcessorMixin {
      * @reason need to clean up state if an exception is thrown
      */
     @Inject(
-            method = "parseEffect",
+            method = "load",
             slice = @Slice(
                     from = @At(value = "CONSTANT:FIRST", args = "stringValue=targets"),
                     to = @At(value = "CONSTANT:FIRST", args = "stringValue=passes")
             ),
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/util/InvalidHierarchicalFileException;wrap(Ljava/lang/Exception;)Lnet/minecraft/util/InvalidHierarchicalFileException;"
+                    target = "Lnet/minecraft/server/ChainedJsonException;forException(Ljava/lang/Exception;)Lnet/minecraft/server/ChainedJsonException;"
             ),
             allow = 1
     )
-    private void satin$cleanupCustomTargetFormat(TextureManager textureManager, Identifier id, CallbackInfo ci) {
+    private void satin$cleanupCustomTargetFormat(TextureManager textureManager, ResourceLocation id, CallbackInfo ci) {
         CustomFormatFramebuffers.clearCustomFormat();
     }
 }

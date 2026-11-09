@@ -17,36 +17,35 @@
  */
 package org.ladysnake.satin.impl;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.Window;
 import org.ladysnake.satin.Satin;
 import org.ladysnake.satin.api.managed.ManagedFramebuffer;
-
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Window;
 import javax.annotation.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.client.renderer.RenderType;
 
 public final class FramebufferWrapper implements ManagedFramebuffer {
     private final RenderLayerSupplier renderLayerSupplier;
     private final String name;
     @Nullable
-    private Framebuffer wrapped;
+    private RenderTarget wrapped;
 
     FramebufferWrapper(String name) {
         this.name = name;
         this.renderLayerSupplier = RenderLayerSupplier.framebuffer(
                 this.name + System.identityHashCode(this),
                 () -> this.beginWrite(false),
-                () -> MinecraftClient.getInstance().getFramebuffer().beginWrite(false)
+                () -> Minecraft.getInstance().getMainRenderTarget().bindWrite(false)
         );
     }
 
-    void findTarget(@Nullable PostEffectProcessor shaderEffect) {
+    void findTarget(@Nullable PostChain shaderEffect) {
         if (shaderEffect == null) {
             this.wrapped = null;
         } else {
-            this.wrapped = shaderEffect.getSecondaryTarget(this.name);
+            this.wrapped = shaderEffect.getTempTarget(this.name);
             if (this.wrapped == null) {
                 Satin.LOGGER.warn("No target framebuffer found with name {} in shader {}", this.name, shaderEffect.getName());
             }
@@ -59,12 +58,12 @@ public final class FramebufferWrapper implements ManagedFramebuffer {
 
     @Nullable
     @Override
-    public Framebuffer getFramebuffer() {
+    public RenderTarget getFramebuffer() {
         return wrapped;
     }
 
     @Override
-    public void copyDepthFrom(Framebuffer buffer) {
+    public void copyDepthFrom(RenderTarget buffer) {
         if (this.wrapped != null) {
             this.wrapped.copyDepthFrom(buffer);
         }
@@ -73,26 +72,26 @@ public final class FramebufferWrapper implements ManagedFramebuffer {
     @Override
     public void beginWrite(boolean updateViewport) {
         if (this.wrapped != null) {
-            this.wrapped.beginWrite(updateViewport);
+            this.wrapped.bindWrite(updateViewport);
         }
     }
 
     @Override
     public void draw() {
-        Window window = MinecraftClient.getInstance().getWindow();
-        this.draw(window.getFramebufferWidth(), window.getFramebufferHeight(), true);
+        Window window = Minecraft.getInstance().getWindow();
+        this.draw(window.getWidth(), window.getHeight(), true);
     }
 
     @Override
     public void draw(int width, int height, boolean disableBlend) {
         if (this.wrapped != null) {
-            this.wrapped.draw(width, height, disableBlend);
+            this.wrapped.blitToScreen(width, height, disableBlend);
         }
     }
 
     @Override
     public void clear() {
-        clear(MinecraftClient.IS_SYSTEM_MAC);
+        clear(Minecraft.ON_OSX);
     }
 
     @Override
@@ -103,7 +102,7 @@ public final class FramebufferWrapper implements ManagedFramebuffer {
     }
 
     @Override
-    public RenderLayer getRenderLayer(RenderLayer baseLayer) {
+    public RenderType getRenderLayer(RenderType baseLayer) {
         return this.renderLayerSupplier.getRenderLayer(baseLayer);
     }
 }

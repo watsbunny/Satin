@@ -17,10 +17,8 @@
  */
 package org.ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import org.joml.Matrix4f;
 
 @FunctionalInterface
@@ -37,11 +35,11 @@ public interface PostWorldRenderCallbackV3 {
             });
 
     /**
-     * @param posingStack a blank {@link MatrixStack} that can be used for rendering custom elements
+     * @param posingStack a blank {@link PoseStack} that can be used for rendering custom elements
      * @param projectionMat the base projection matrix for world rendering
      * @param modelViewMat the model-view matrix corresponding to the camera's perspective
      * @param camera the camera from which perspective the world is being rendered
      * @param tickDelta fraction of time between two consecutive ticks (before 0 and 1)
      */
-    void onWorldRendered(MatrixStack posingStack, Matrix4f projectionMat, Matrix4f modelViewMat, Camera camera, float tickDelta);
+    void onWorldRendered(PoseStack posingStack, Matrix4f projectionMat, Matrix4f modelViewMat, Camera camera, float tickDelta);
 }

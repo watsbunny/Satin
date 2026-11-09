@@ -17,23 +17,23 @@
  */
 package org.ladysnake.satin.impl;
 
+import com.mojang.blaze3d.shaders.Uniform;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.JsonEffectShaderProgram;
-import net.minecraft.client.gl.PostEffectPass;
-import net.minecraft.client.gl.ShaderProgram;
 import org.ladysnake.satin.api.managed.uniform.SamplerUniform;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
+import net.minecraft.client.renderer.EffectInstance;
+import net.minecraft.client.renderer.PostPass;
+import net.minecraft.client.renderer.ShaderInstance;
 
 /**
- * Mojank working in divergent branches for half a century, {@link net.minecraft.client.gl.ShaderProgram}
- * is a copy of an old implementation of {@link net.minecraft.client.gl.JsonEffectShaderProgram}.
- * The latter has since been updated to have the {@link net.minecraft.client.gl.JsonEffectShaderProgram#bindSampler(String, IntSupplier)}
- * while the former still uses {@link net.minecraft.client.gl.ShaderProgram#addSampler(String, Object)}.
+ * Mojank working in divergent branches for half a century, {@link net.minecraft.client.renderer.ShaderInstance}
+ * is a copy of an old implementation of {@link net.minecraft.client.renderer.EffectInstance}.
+ * The latter has since been updated to have the {@link net.minecraft.client.renderer.EffectInstance#setSampler(String, IntSupplier)}
+ * while the former still uses {@link net.minecraft.client.renderer.ShaderInstance#setSampler(String, Object)}.
  *
  * <p>So we need to deal with both those extremely similar implementations
  */
@@ -47,11 +47,11 @@ public abstract class ManagedSamplerUniformBase extends ManagedUniformBase imple
     }
 
     @Override
-    public boolean findUniformTargets(List<PostEffectPass> shaders) {
+    public boolean findUniformTargets(List<PostPass> shaders) {
         List<SamplerAccess> targets = new ArrayList<>(shaders.size());
         IntList rawTargets = new IntArrayList(shaders.size());
-        for (PostEffectPass shader : shaders) {
-            JsonEffectShaderProgram program = shader.getProgram();
+        for (PostPass shader : shaders) {
+            EffectInstance program = shader.getEffect();
             SamplerAccess access = (SamplerAccess) program;
             if (access.satin$hasSampler(this.name)) {
                 targets.add(access);
@@ -69,7 +69,7 @@ public abstract class ManagedSamplerUniformBase extends ManagedUniformBase imple
     }
 
     @Override
-    public boolean findUniformTarget(ShaderProgram shader) {
+    public boolean findUniformTarget(ShaderInstance shader) {
         return findUniformTarget(((SamplerAccess) shader));
     }
 
@@ -98,7 +98,7 @@ public abstract class ManagedSamplerUniformBase extends ManagedUniformBase imple
         int length = this.locations.length;
         for (int i = 0; i < length; i++) {
             this.targets[i].satin$removeSampler(this.name);
-            GlUniform.uniform1(this.locations[i], activeTexture);
+            Uniform.uploadInteger(this.locations[i], activeTexture);
         }
     }
 }

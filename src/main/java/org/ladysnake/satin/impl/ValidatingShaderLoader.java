@@ -18,8 +18,6 @@
 package org.ladysnake.satin.impl;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
 import org.ladysnake.satin.Satin;
 import org.ladysnake.satin.api.util.ShaderLinkException;
 import org.ladysnake.satin.api.util.ShaderLoader;
@@ -27,6 +25,8 @@ import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL30;
 
 import javax.annotation.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +49,7 @@ public final class ValidatingShaderLoader implements ShaderLoader {
      * @return the reference to the initialized program
      * @throws IOException If an I/O error occurs while reading the shader source files
      */
-    public int loadShader(ResourceManager resourceManager, @Nullable Identifier vertexLocation, @Nullable Identifier fragmentLocation) throws IOException {
+    public int loadShader(ResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) throws IOException {
 
         // program creation
         int programId = GlStateManager.glCreateProgram();
@@ -113,10 +113,10 @@ public final class ValidatingShaderLoader implements ShaderLoader {
      * @return a string with the content of the file
      * @throws java.io.FileNotFoundException if the designated shader file does not exist
      */
-    private String fromFile(ResourceManager resourceManager, Identifier fileLocation) throws IOException {
+    private String fromFile(ResourceManager resourceManager, ResourceLocation fileLocation) throws IOException {
         StringBuilder source = new StringBuilder();
 
-        try (InputStream in = resourceManager.getResourceOrThrow(fileLocation).getInputStream();
+        try (InputStream in = resourceManager.getResourceOrThrow(fileLocation).open();
              BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {

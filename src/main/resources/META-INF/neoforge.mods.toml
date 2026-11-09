@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="LGPL-3.0-or-later"
+issueTrackerURL="https://github.com/Ladysnake/Satin/issues"
+
+[[mods]]
+modId="satin"
+version="${version}"
+displayName="Satin"
+authors="Pyrofab, WatsBunny (NeoForge port)"
+description='''A lightweight library for OpenGL shader usage, ported to NeoForge.'''
+
+[[dependencies.satin]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.satin]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="CLIENT"

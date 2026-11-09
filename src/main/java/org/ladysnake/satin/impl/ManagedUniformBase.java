@@ -17,10 +17,9 @@
  */
 package org.ladysnake.satin.impl;
 
-import net.minecraft.client.gl.PostEffectPass;
-import net.minecraft.client.gl.ShaderProgram;
-
 import java.util.List;
+import net.minecraft.client.renderer.PostPass;
+import net.minecraft.client.renderer.ShaderInstance;
 
 public abstract class ManagedUniformBase {
     protected final String name;
@@ -29,9 +28,9 @@ public abstract class ManagedUniformBase {
         this.name = name;
     }
 
-    public abstract boolean findUniformTargets(List<PostEffectPass> shaders);
+    public abstract boolean findUniformTargets(List<PostPass> shaders);
 
-    public abstract boolean findUniformTarget(ShaderProgram shader);
+    public abstract boolean findUniformTarget(ShaderInstance shader);
 
     public String getName() {
         return name;

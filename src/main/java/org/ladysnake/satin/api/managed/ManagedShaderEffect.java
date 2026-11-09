@@ -17,11 +17,6 @@
  */
 package org.ladysnake.satin.api.managed;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.util.Identifier;
 import org.apiguardian.api.API;
 import org.joml.Matrix4f;
 import org.ladysnake.satin.api.managed.uniform.SamplerUniform;
@@ -38,15 +33,21 @@ import org.ladysnake.satin.api.managed.uniform.UniformFinder;
 import org.ladysnake.satin.api.managed.uniform.UniformMat4;
 
 import javax.annotation.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.resources.ResourceLocation;
 import java.io.IOException;
 import java.util.function.Consumer;
 
 import static org.apiguardian.api.API.Status.*;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+
 /**
  * A post processing shader that is applied to the main framebuffer
  * <p>
- * Post shaders loaded through {@link ShaderEffectManager#manage(Identifier, Consumer)} are self-managed and will be
+ * Post shaders loaded through {@link ShaderEffectManager#manage(ResourceLocation, Consumer)} are self-managed and will be
  * reloaded when shader assets are reloaded (through <tt>F3-T</tt> or <tt>/ladylib_shader_reload</tt>) or the
  * screen resolution changes.
  * <p>
@@ -57,19 +58,19 @@ import static org.apiguardian.api.API.Status.*;
  */
 public interface ManagedShaderEffect extends UniformFinder {
     /**
-     * Returns this object's managed {@link PostEffectProcessor}, creating and initializing it if it doesn't exist.
+     * Returns this object's managed {@link PostChain}, creating and initializing it if it doesn't exist.
      * <p>
      * This method will return <code>null</code> if an error occurs during initialization.
      * <p>
      * <em>Note: calling this before the graphic context is ready will cause issues.</em>
      *
-     * @return the {@link PostEffectProcessor} managed by this object
+     * @return the {@link PostChain} managed by this object
      * @see #initialize()
      * @see #isInitialized()
      */
     @Nullable
     @API(status = MAINTAINED, since = "1.0.0")
-    PostEffectProcessor getShaderEffect();
+    PostChain getShaderEffect();
 
     /**
      * Initializes this shader, allocating required system resources
@@ -126,8 +127,8 @@ public interface ManagedShaderEffect extends UniformFinder {
      * <p>
      * Calling this method first setups the graphic state for rendering,
      * then uploads uniforms to the GPU if they have been changed since last
-     * draw, draws the {@link MinecraftClient#getFramebuffer() main framebuffer}'s texture
-     * to intermediate {@link Framebuffer framebuffers} as defined by the JSON files
+     * draw, draws the {@link Minecraft#getMainRenderTarget() main framebuffer}'s texture
+     * to intermediate {@link RenderTarget framebuffers} as defined by the JSON files
      * and resets part of the graphic state. The shader will be {@link #initialize() initialized}
      * if it has not been before.
      * <p>
@@ -285,10 +286,10 @@ public interface ManagedShaderEffect extends UniformFinder {
      * @param samplerName the name of the sampler uniform field in the shader source file and json
      * @param textureFbo  a framebuffer which main texture will be used
      * @see #findSampler(String)
-     * @see SamplerUniform#set(Framebuffer)
+     * @see SamplerUniform#set(RenderTarget)
      */
     @API(status = STABLE, since = "1.0.0")
-    void setSamplerUniform(String samplerName, Framebuffer textureFbo);
+    void setSamplerUniform(String samplerName, RenderTarget textureFbo);
 
     /**
      * Sets the value of a sampler uniform declared in json

@@ -17,55 +17,54 @@
  */
 package org.ladysnake.satin.impl;
 
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
-import net.minecraft.client.render.VertexFormat;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.satin.mixin.client.render.RenderPhaseAccessor;
-
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.ShaderInstance;
 
 public class RenderLayerSupplier {
-    private final Consumer<RenderLayer.MultiPhaseParameters.Builder> transform;
-    private final Map<RenderLayer, RenderLayer> renderLayerCache = new HashMap<>();
+    private final Consumer<RenderType.CompositeState.CompositeStateBuilder> transform;
+    private final Map<RenderType, RenderType> renderLayerCache = new HashMap<>();
     private final String uniqueName;
     private final @Nullable VertexFormat vertexFormat;
 
     public static RenderLayerSupplier framebuffer(String name, Runnable setupState, Runnable cleanupState) {
-        RenderPhase.Target target = new RenderPhase.Target(
+        RenderStateShard.OutputStateShard target = new RenderStateShard.OutputStateShard(
                 name + "_target",
                 setupState,
                 cleanupState
         );
-        return new RenderLayerSupplier(name, builder -> builder.target(target));
+        return new RenderLayerSupplier(name, builder -> builder.setOutputState(target));
     }
 
-    public static RenderLayerSupplier shader(String name, VertexFormat vertexFormat, Supplier<ShaderProgram> shaderSupplier) {
-        RenderPhase shader = Helper.makeShader(shaderSupplier);
+    public static RenderLayerSupplier shader(String name, VertexFormat vertexFormat, Supplier<ShaderInstance> shaderSupplier) {
+        RenderStateShard shader = Helper.makeShader(shaderSupplier);
         return new RenderLayerSupplier(name, vertexFormat, builder -> Helper.applyShader(builder, shader));
     }
 
-    public RenderLayerSupplier(String name,  Consumer<RenderLayer.MultiPhaseParameters.Builder> transformer) {
+    public RenderLayerSupplier(String name,  Consumer<RenderType.CompositeState.CompositeStateBuilder> transformer) {
         this(name, null, transformer);
     }
 
-    public RenderLayerSupplier(String name, @Nullable VertexFormat vertexFormat, Consumer<RenderLayer.MultiPhaseParameters.Builder> transformer) {
+    public RenderLayerSupplier(String name, @Nullable VertexFormat vertexFormat, Consumer<RenderType.CompositeState.CompositeStateBuilder> transformer) {
         this.uniqueName = name;
         this.vertexFormat = vertexFormat;
         this.transform = transformer;
     }
 
-    public RenderLayer getRenderLayer(RenderLayer baseLayer) {
-        RenderLayer existing = this.renderLayerCache.get(baseLayer);
+    public RenderType getRenderLayer(RenderType baseLayer) {
+        RenderType existing = this.renderLayerCache.get(baseLayer);
         if (existing != null) {
             return existing;
         }
         String newName = ((RenderPhaseAccessor) baseLayer).getName() + "_" + this.uniqueName;
-        RenderLayer newLayer = RenderLayerDuplicator.copy(baseLayer, newName, this.vertexFormat, this.transform);
+        RenderType newLayer = RenderLayerDuplicator.copy(baseLayer, newName, this.vertexFormat, this.transform);
         this.renderLayerCache.put(baseLayer, newLayer);
         return newLayer;
     }
@@ -73,13 +72,13 @@ public class RenderLayerSupplier {
     /**
      * Big brain move right there
      */
-    private static class Helper extends RenderPhase {
-        public static RenderPhase makeShader(Supplier<net.minecraft.client.gl.ShaderProgram> shader) {
-            return new ShaderProgram(shader);
+    private static class Helper extends RenderStateShard {
+        public static RenderStateShard makeShader(Supplier<net.minecraft.client.renderer.ShaderInstance> shader) {
+            return new ShaderStateShard(shader);
         }
 
-        public static void applyShader(RenderLayer.MultiPhaseParameters.Builder builder, RenderPhase shader) {
-            builder.program((ShaderProgram) shader);
+        public static void applyShader(RenderType.CompositeState.CompositeStateBuilder builder, RenderStateShard shader) {
+            builder.setShaderState((ShaderStateShard) shader);
         }
 
         private Helper(String name, Runnable beginAction, Runnable endAction) {

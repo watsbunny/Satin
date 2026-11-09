@@ -17,8 +17,6 @@
  */
 package org.ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
 
 public interface ShaderEffectRenderCallback {
     /**

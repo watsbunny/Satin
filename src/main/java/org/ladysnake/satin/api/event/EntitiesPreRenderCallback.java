@@ -17,10 +17,8 @@
  */
 package org.ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.culling.Frustum;
 
 @FunctionalInterface
 public interface EntitiesPreRenderCallback {

@@ -17,11 +17,11 @@
  */
 package org.ladysnake.satin.mixin.client.render;
 
-import net.minecraft.client.render.RenderPhase;
+import net.minecraft.client.renderer.RenderStateShard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(RenderPhase.class)
+@Mixin(RenderStateShard.class)
 public interface RenderPhaseAccessor {
     @Accessor
     String getName();

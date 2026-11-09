@@ -17,17 +17,18 @@
  */
 package org.ladysnake.satin.api.managed;
 
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.util.Identifier;
 import org.apiguardian.api.API;
 import org.ladysnake.satin.impl.ReloadableShaderEffectManager;
 
 import java.util.function.Consumer;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.resources.ResourceLocation;
 
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.STABLE;
+
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
 /**
  * @see ManagedShaderEffect
@@ -39,28 +40,28 @@ public interface ShaderEffectManager {
     }
 
     /**
-     * Manages a post-process {@link PostEffectProcessor} loaded from a json definition file
+     * Manages a post-process {@link PostChain} loaded from a json definition file
      *
      * @param location the location of the json within your mod's assets
      * @return a screen shader that will be automatically reloaded as needed
      */
     @API(status = STABLE, since = "1.0.0")
-    ManagedShaderEffect manage(Identifier location);
+    ManagedShaderEffect manage(ResourceLocation location);
 
     /**
-     * Manages a post-process {@link PostEffectProcessor} loaded from a json definition file
+     * Manages a post-process {@link PostChain} loaded from a json definition file
      *
      * @param location         the location of the json within your mod's assets
      * @param initCallback a block ran once the shader effect is initialized
      * @return a screen shader that will be automatically reloaded as needed
      */
     @API(status = STABLE, since = "1.0.0")
-    ManagedShaderEffect manage(Identifier location, Consumer<ManagedShaderEffect> initCallback);
+    ManagedShaderEffect manage(ResourceLocation location, Consumer<ManagedShaderEffect> initCallback);
 
     /**
-     * Manages a core {@link net.minecraft.client.gl.ShaderProgram} loaded from a json definition file
+     * Manages a core {@link net.minecraft.client.renderer.ShaderInstance} loaded from a json definition file
      *
-     * <p>This overload forwards to {@link #manageCoreShader(Identifier, VertexFormat)} with {@link VertexFormats#POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL},
+     * <p>This overload forwards to {@link #manageCoreShader(ResourceLocation, VertexFormat)} with {@link DefaultVertexFormat#NEW_ENTITY},
      * the format used by entity rendering
      *
      * <p>The shader location must be in {@code assets/shaders/core}.
@@ -71,10 +72,10 @@ public interface ShaderEffectManager {
      * @return a core render shader that will be reloaded as needed
      */
     @API(status = EXPERIMENTAL, since = "1.6.0")
-    ManagedCoreShader manageCoreShader(Identifier location);
+    ManagedCoreShader manageCoreShader(ResourceLocation location);
 
     /**
-     * Manages a core {@link net.minecraft.client.gl.ShaderProgram} loaded from a json definition file
+     * Manages a core {@link net.minecraft.client.renderer.ShaderInstance} loaded from a json definition file
      *
      * <p>The shader location must be in {@code assets/shaders/core}.
      * Eg. to get a shader located at {@code mymod/assets/shaders/core/myshader.json}:
@@ -85,10 +86,10 @@ public interface ShaderEffectManager {
      * @return a core render shader that will be reloaded as needed
      */
     @API(status = EXPERIMENTAL, since = "1.6.0")
-    ManagedCoreShader manageCoreShader(Identifier location, VertexFormat vertexFormat);
+    ManagedCoreShader manageCoreShader(ResourceLocation location, VertexFormat vertexFormat);
 
     /**
-     * Manages a core {@link net.minecraft.client.gl.ShaderProgram} loaded from a json definition file
+     * Manages a core {@link net.minecraft.client.renderer.ShaderInstance} loaded from a json definition file
      *
      * <p>The shader location must be in {@code assets/shaders/core}.
      * E.g. to get a shader located at {@code mymod/assets/shaders/core/myshader.json}:
@@ -100,7 +101,7 @@ public interface ShaderEffectManager {
      * @return a core render shader that will be reloaded as needed
      */
     @API(status = EXPERIMENTAL, since = "1.6.0")
-    ManagedCoreShader manageCoreShader(Identifier location, VertexFormat vertexFormat, Consumer<ManagedCoreShader> initCallback);
+    ManagedCoreShader manageCoreShader(ResourceLocation location, VertexFormat vertexFormat, Consumer<ManagedCoreShader> initCallback);
 
     /**
      * Removes a shader from the global list of managed shaders,

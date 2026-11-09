@@ -17,10 +17,10 @@
  */
 package org.ladysnake.satin.mixin.client.gl;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.Framebuffer;
 import org.ladysnake.satin.api.experimental.ReadableDepthFramebuffer;
 import org.lwjgl.opengl.GL11;
 import org.objectweb.asm.Opcodes;
@@ -37,23 +37,23 @@ import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
 import static org.spongepowered.asm.mixin.injection.At.Shift.AFTER;
 
-@Mixin(Framebuffer.class)
+@Mixin(RenderTarget.class)
 public abstract class DepthGlFramebufferMixin implements ReadableDepthFramebuffer {
-    @Shadow @Final public boolean useDepthAttachment;
+    @Shadow @Final public boolean useDepth;
 
-    @Shadow public int textureWidth;
-    @Shadow public int textureHeight;
+    @Shadow public int width;
+    @Shadow public int height;
 
-    @Shadow public abstract void beginWrite(boolean boolean_1);
+    @Shadow public abstract void bindWrite(boolean boolean_1);
 
     private int satin$stillDepthTexture = -1;
 
     @Inject(
-            method = "initFbo",
-            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = "Lnet/minecraft/client/gl/Framebuffer;depthAttachment:I", shift = AFTER)
+            method = "createBuffers",
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;depthBufferId:I", shift = AFTER)
     )
     private void initFbo(int width, int height, boolean flushErrors, CallbackInfo ci) {
-        if (this.useDepthAttachment) {
+        if (this.useDepth) {
             this.satin$stillDepthTexture = satin$setupDepthTexture();
         }
     }
@@ -66,11 +66,11 @@ public abstract class DepthGlFramebufferMixin implements ReadableDepthFramebuffe
         RenderSystem.texParameter(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         RenderSystem.texParameter(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         RenderSystem.texParameter(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        GlStateManager._texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, this.textureWidth, this.textureHeight, 0,GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, null);
+        GlStateManager._texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, this.width, this.height, 0,GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, null);
         return shadowMap;
     }
 
-    @Inject(method = "delete", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/gl/Framebuffer;depthAttachment:I"))
+    @Inject(method = "destroyBuffers", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;depthBufferId:I"))
     private void delete(CallbackInfo ci) {
         if (this.satin$stillDepthTexture > -1) {
             // delete texture
@@ -86,10 +86,10 @@ public abstract class DepthGlFramebufferMixin implements ReadableDepthFramebuffe
 
     @Override
     public void freezeDepthMap() {
-        if (this.useDepthAttachment) {
-            this.beginWrite(false);
+        if (this.useDepth) {
+            this.bindWrite(false);
             RenderSystem.bindTexture(this.satin$stillDepthTexture);
-            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, this.textureWidth, this.textureHeight);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, this.width, this.height);
         }
     }
 }

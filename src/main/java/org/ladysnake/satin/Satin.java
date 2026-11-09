@@ -17,8 +17,9 @@
  */
 package org.ladysnake.satin;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apiguardian.api.API;
@@ -28,7 +29,8 @@ import org.ladysnake.satin.impl.ReloadableShaderEffectManager;
 
 import static org.apiguardian.api.API.Status.STABLE;
 
-public class Satin implements ClientModInitializer {
+@Mod(value = Satin.MOD_ID, dist = Dist.CLIENT)
+public class Satin {
     public static final String MOD_ID = "satin";
     public static final Logger LOGGER = LogManager.getLogger("Satin");
 
@@ -42,14 +44,13 @@ public class Satin implements ClientModInitializer {
         return false;
     }
 
-    @Override
-    public void onInitializeClient() {
+    public Satin() {
         ResolutionChangeCallback.EVENT.register(ReloadableShaderEffectManager.INSTANCE);
         WorldRendererReloadCallback.EVENT.register(ReloadableShaderEffectManager.INSTANCE);
-        if (FabricLoader.getInstance().isModLoaded("optifabric")) {
+        if (ModList.get().isLoaded("optifabric") || ModList.get().isLoaded("optifine")) {
             LOGGER.warn("[Satin] Optifine present in the instance, custom entity post process shaders will not work");
         }
-        if (FabricLoader.getInstance().isModLoaded("vivecraft")) {
+        if (ModList.get().isLoaded("vivecraft")) {
             LOGGER.warn("[Satin] Vivecraft present in the instance, you may experience degraded performance - try turning eye stencil off in VR settings");
         }
     }

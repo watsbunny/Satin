@@ -17,7 +17,6 @@
  */
 package org.ladysnake.satin.mixin.client.gl;
 
-import net.minecraft.client.gl.ShaderProgram;
 import org.ladysnake.satin.impl.SamplerAccess;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,19 +25,20 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.renderer.ShaderInstance;
 
-@Mixin(ShaderProgram.class)
+@Mixin(ShaderInstance.class)
 public abstract class CoreShaderMixin implements SamplerAccess {
-    @Shadow @Final private Map<String, Object> samplers;
+    @Shadow @Final private Map<String, Object> samplerMap;
 
     @Override
     public void satin$removeSampler(String name) {
-        this.samplers.remove(name);
+        this.samplerMap.remove(name);
     }
 
     @Override
     public boolean satin$hasSampler(String name) {
-        return this.samplers.containsKey(name);
+        return this.samplerMap.containsKey(name);
     }
 
     @Override
@@ -46,6 +46,6 @@ public abstract class CoreShaderMixin implements SamplerAccess {
     public abstract List<String> satin$getSamplerNames();
 
     @Override
-    @Accessor("loadedSamplerIds")
+    @Accessor("samplerLocations")
     public abstract List<Integer> satin$getSamplerShaderLocs();
 }

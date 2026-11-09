@@ -18,18 +18,17 @@
 package org.ladysnake.satin.impl;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import net.minecraft.client.render.RenderLayer;
-
 import java.util.Set;
+import net.minecraft.client.renderer.RenderType;
 
 public final class BlockRenderLayerRegistry {
     public static final BlockRenderLayerRegistry INSTANCE = new BlockRenderLayerRegistry();
-    private final Set<RenderLayer> renderLayers = new ObjectArraySet<>();   // ArraySet for faster iteration
+    private final Set<RenderType> renderLayers = new ObjectArraySet<>();   // ArraySet for faster iteration
     private volatile boolean registryLocked = false;
     
     private BlockRenderLayerRegistry(){}
     
-    public void registerRenderLayer(RenderLayer layer) {
+    public void registerRenderLayer(RenderType layer) {
         if(registryLocked){
             throw new IllegalStateException(String.format(
                 "RenderLayer %s was added too late.",
@@ -40,7 +39,7 @@ public final class BlockRenderLayerRegistry {
         renderLayers.add(layer);
     }
     
-    public Set<RenderLayer> getLayers() {
+    public Set<RenderType> getLayers() {
         registryLocked = true;
         return renderLayers;
     }

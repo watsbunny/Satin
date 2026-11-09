@@ -17,57 +17,56 @@
  */
 package org.ladysnake.satin.mixin.client.render;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexFormat;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.satin.impl.RenderLayerDuplicator;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.function.Consumer;
+import net.minecraft.client.renderer.RenderType;
 
-@Mixin(RenderLayer.MultiPhase.class)
-public abstract class RenderLayerMultiPhaseMixin extends RenderLayer implements RenderLayerDuplicator.SatinRenderLayer {
+@Mixin(RenderType.CompositeRenderType.class)
+public abstract class RenderLayerMultiPhaseMixin extends RenderType implements RenderLayerDuplicator.SatinRenderLayer {
     @Shadow
     @Final
-    private MultiPhaseParameters phases;
+    private CompositeState state;
 
-    public RenderLayerMultiPhaseMixin(String name, VertexFormat vertexFormat, VertexFormat.DrawMode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, Runnable startAction, Runnable endAction) {
+    public RenderLayerMultiPhaseMixin(String name, VertexFormat vertexFormat, VertexFormat.Mode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, Runnable startAction, Runnable endAction) {
         super(name, vertexFormat, drawMode, expectedBufferSize, hasCrumbling, translucent, startAction, endAction);
     }
 
     @Override
-    public RenderLayer satin$copy(String newName, @Nullable VertexFormat vertexFormat, Consumer<MultiPhaseParameters.Builder> op) {
+    public RenderType satin$copy(String newName, @Nullable VertexFormat vertexFormat, Consumer<CompositeState.CompositeStateBuilder> op) {
         return RenderLayerAccessor.satin$of(
                 newName,
-                vertexFormat == null ? this.getVertexFormat() : vertexFormat,
-                this.getDrawMode(),
-                this.getExpectedBufferSize(),
-                this.hasCrumbling(),
-                ((RenderLayerAccessor) this).isTranslucent(),
+                vertexFormat == null ? this.format() : vertexFormat,
+                this.mode(),
+                this.bufferSize(),
+                this.affectsCrumbling(),
+                ((RenderLayerAccessor) this).isSortOnUpload(),
                 this.satin$copyPhaseParameters(op)
         );
     }
 
     @Override
-    public MultiPhaseParameters satin$copyPhaseParameters(Consumer<MultiPhaseParameters.Builder> op) {
+    public CompositeState satin$copyPhaseParameters(Consumer<CompositeState.CompositeStateBuilder> op) {
         // Yes we can cast to accessor
-        @SuppressWarnings("ConstantConditions") RenderLayerMixin.MultiPhaseParametersAccessor access = ((RenderLayerMixin.MultiPhaseParametersAccessor) (Object) this.phases);
-        MultiPhaseParameters.Builder builder = MultiPhaseParameters.builder()
-                .texture(access.getTexture())
-                .program(access.getProgram())
-                .transparency(access.getTransparency())
-                .depthTest(access.getDepthTest())
-                .cull(access.getCull())
-                .lightmap(access.getLightmap())
-                .overlay(access.getOverlay())
-                .layering(access.getLayering())
-                .target(access.getTarget())
-                .texturing(access.getTexturing())
-                .writeMaskState(access.getWriteMaskState())
-                .lineWidth(access.getLineWidth());
+        @SuppressWarnings("ConstantConditions") RenderLayerMixin.MultiPhaseParametersAccessor access = ((RenderLayerMixin.MultiPhaseParametersAccessor) (Object) this.state);
+        CompositeState.CompositeStateBuilder builder = CompositeState.builder()
+                .setTextureState(access.getTextureState())
+                .setShaderState(access.getShaderState())
+                .setTransparencyState(access.getTransparencyState())
+                .setDepthTestState(access.getDepthTestState())
+                .setCullState(access.getCullState())
+                .setLightmapState(access.getLightmapState())
+                .setOverlayState(access.getOverlayState())
+                .setLayeringState(access.getLayeringState())
+                .setOutputState(access.getOutputState())
+                .setTexturingState(access.getTexturingState())
+                .setWriteMaskState(access.getWriteMaskState())
+                .setLineState(access.getLineState());
         op.accept(builder);
-        return builder.build(access.getOutlineMode());
+        return builder.createCompositeState(access.getOutlineProperty());
     }
 }

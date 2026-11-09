@@ -17,14 +17,12 @@
  */
 package org.ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 
 @FunctionalInterface
 public interface WorldRendererReloadCallback {
     /**
-     * Fired in {@link WorldRenderer#reload()}, typically called when video settings are updated or the player joins a world
+     * Fired in {@link LevelRenderer#allChanged()}, typically called when video settings are updated or the player joins a world
      */
     Event<WorldRendererReloadCallback> EVENT = EventFactory.createArrayBacked(WorldRendererReloadCallback.class,
             (listeners) -> (renderer) -> {
@@ -33,5 +31,5 @@ public interface WorldRendererReloadCallback {
                 }
             });
 
-    void onRendererReload(WorldRenderer renderer);
+    void onRendererReload(LevelRenderer renderer);
 }

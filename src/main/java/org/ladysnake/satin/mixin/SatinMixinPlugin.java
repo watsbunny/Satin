@@ -17,7 +17,7 @@
  */
 package org.ladysnake.satin.mixin;
 
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.ClassNode;
@@ -32,15 +32,15 @@ public final class SatinMixinPlugin implements IMixinConfigPlugin {
     private static final boolean ALLOW_RENDER_LAYER_MIXINS;
 
     static {
-        FabricLoader loader = FabricLoader.getInstance();
-        if (loader.isModLoaded("canvas")) {
+        ModList loader = ModList.get();
+        if (loader.isLoaded("canvas")) {
             LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
             ALLOW_RENDER_LAYER_MIXINS = false;
-        } else if (loader.isModLoaded("iris")) {
+        } else if (loader.isLoaded("iris")) {
             LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
             ALLOW_RENDER_LAYER_MIXINS = false;
         } else {
-            if (loader.isModLoaded("sodium")) {
+            if (loader.isLoaded("sodium")) {
                 LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
             }
             ALLOW_RENDER_LAYER_MIXINS = true;

@@ -1,111 +1,73 @@
 plugins {
-    id 'fabric-loom' version "1.6-SNAPSHOT"
-    id 'io.github.ladysnake.chenille' version '0.13.0'
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.91'
 }
 
-archivesBaseName = project.archives_base_name
-group = project.maven_group
 version = project.mod_version
+group = project.maven_group
 
-chenille {
-    configurePublishing {
-        mainArtifact = remapJar.archiveFile
-        withLadysnakeMaven()
-        withCurseforgeRelease()
-        withModrinthRelease()
-        withGithubRelease()
-    }
-
-    license = project.license_header
-    javaVersion = 21
+base {
+    archivesName = project.archives_base_name
 }
 
-sourceSets {
-    testmod {
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
-    }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    mavenCentral()
 }
 
-loom {
+neoForge {
+    version = project.neo_version
+
     runs {
-        testmodClient {
+        client {
             client()
-            name = "Testmod Client"
-            source sourceSets.testmod
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
         }
     }
 }
 
-repositories {
-    chenille.repositories {
-        terraformers()
-        modrinth()
-    }
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
-//    modCompileOnly ("maven.modrinth:iris:${project.iris_version}")
+    compileOnly "org.apiguardian:apiguardian-api:1.0.0"
+    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+    compileOnly "org.jetbrains:annotations:18.0.0"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+}
 
-    compileOnly "org.jetbrains:annotations:${jb_annotations_version}"
-    compileOnly "com.google.code.findbugs:jsr305:${findbugs_version}"
-    compileOnly "org.apiguardian:apiguardian-api:${apiguardian_version}"
-
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.0-M1"
-
-    testmodCompileOnly "org.jetbrains:annotations:${jb_annotations_version}"
-    testmodImplementation sourceSets.main.output
+test {
+    useJUnitPlatform()
 }
 
 processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/satin.accesswidener")
-}
-
-java {
-    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-    // if it is present.
-    // If you remove this line, sources will not be generated.
-    withSourcesJar()
-}
-
-
-
-publishing {
-    publications {
-        create("relocation", MavenPublication) {
-            pom {
-                // Old artifact coordinates
-                groupId = "io.github.ladysnake"
-
-                distributionManagement {
-                    relocation {
-                        // New artifact coordinates
-                        groupId = "org.ladysnake"
-                        message = "groupId has been changed"
-                    }
-                }
-            }
-        }
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand version: project.version
     }
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}"}
-    }
+    manifest.attributes([
+            'MixinConfigs': 'mixins.satin.client.json'
+    ])
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = project.maven_group
+            artifactId = project.archives_base_name
+            version = project.mod_version
+        }
+    }
+}

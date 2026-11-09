@@ -17,12 +17,6 @@
  */
 package org.ladysnake.satin.mixin.client.event;
 
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.Entity;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
 import org.ladysnake.satin.api.event.PickEntityShaderCallback;
 import org.ladysnake.satin.api.event.ShaderEffectRenderCallback;
 import org.ladysnake.satin.impl.ReloadableShaderEffectManager;
@@ -33,6 +27,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
+import net.minecraft.world.entity.Entity;
 
 import static org.spongepowered.asm.mixin.injection.At.Shift.AFTER;
 
@@ -40,37 +40,37 @@ import static org.spongepowered.asm.mixin.injection.At.Shift.AFTER;
 public abstract class GameRendererMixin {
 
     @Shadow @Nullable
-    PostEffectProcessor postProcessor;
+    PostChain postEffect;
 
     @Shadow
-    protected abstract void loadPostProcessor(Identifier id);
+    protected abstract void loadEffect(ResourceLocation id);
 
     /**
      * Fires {@link ShaderEffectRenderCallback#EVENT}
      */
     @Inject(
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;drawEntityOutlinesFramebuffer()V", shift = AFTER),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;doEntityOutline()V", shift = AFTER),
             method = "render"
     )
-    private void hookShaderRender(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
-        ShaderEffectRenderCallback.EVENT.invoker().renderShaderEffects(tickCounter.getTickDelta(tick));
+    private void hookShaderRender(DeltaTracker tickCounter, boolean tick, CallbackInfo ci) {
+        ShaderEffectRenderCallback.EVENT.invoker().renderShaderEffects(tickCounter.getGameTimeDeltaPartialTick(tick));
     }
 
     /**
      * Fires {@link PickEntityShaderCallback#EVENT}
      * Disabled by optifine
      */
-    @Inject(method = "onCameraEntitySet", at = @At(value = "RETURN"), require = 0)
+    @Inject(method = "checkEntityPostEffect", at = @At(value = "RETURN"), require = 0)
     private void useCustomEntityShader(@Nullable Entity entity, CallbackInfo info) {
-        if (this.postProcessor == null) {
+        if (this.postEffect == null) {
             // Mixin does not like method references to shadowed methods
             //noinspection Convert2MethodRef
-            PickEntityShaderCallback.EVENT.invoker().pickEntityShader(entity, loc -> this.loadPostProcessor(loc), () -> this.postProcessor);
+            PickEntityShaderCallback.EVENT.invoker().pickEntityShader(entity, loc -> this.loadEffect(loc), () -> this.postEffect);
         }
     }
 
-    @Inject(method = "loadPrograms", at = @At(value = "RETURN"))
-    private void loadSatinPrograms(ResourceFactory factory, CallbackInfo ci) {
+    @Inject(method = "reloadShaders", at = @At(value = "RETURN"))
+    private void loadSatinPrograms(ResourceProvider factory, CallbackInfo ci) {
         ReloadableShaderEffectManager.INSTANCE.reload(factory);
     }
 }

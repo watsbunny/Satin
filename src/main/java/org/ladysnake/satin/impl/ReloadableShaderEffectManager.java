@@ -17,14 +17,10 @@
  */
 package org.ladysnake.satin.impl;
 
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.Window;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
 import org.ladysnake.satin.Satin;
 import org.ladysnake.satin.api.event.ResolutionChangeCallback;
 import org.ladysnake.satin.api.event.WorldRendererReloadCallback;
@@ -34,6 +30,10 @@ import org.ladysnake.satin.api.managed.ShaderEffectManager;
 
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 
 /**
  * A {@link ShaderEffectManager} that is reloaded along with resources
@@ -53,7 +53,7 @@ public final class ReloadableShaderEffectManager implements ShaderEffectManager,
      * @return a lazily initialized shader effect
      */
     @Override
-    public ManagedShaderEffect manage(Identifier location) {
+    public ManagedShaderEffect manage(ResourceLocation location) {
         return manage(location, s -> { });
     }
 
@@ -65,24 +65,24 @@ public final class ReloadableShaderEffectManager implements ShaderEffectManager,
      * @return a lazily initialized screen shader
      */
     @Override
-    public ManagedShaderEffect manage(Identifier location, Consumer<ManagedShaderEffect> initCallback) {
+    public ManagedShaderEffect manage(ResourceLocation location, Consumer<ManagedShaderEffect> initCallback) {
         ResettableManagedShaderEffect ret = new ResettableManagedShaderEffect(location, initCallback);
         managedShaders.add(ret);
         return ret;
     }
 
     @Override
-    public ManagedCoreShader manageCoreShader(Identifier location) {
-        return manageCoreShader(location, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+    public ManagedCoreShader manageCoreShader(ResourceLocation location) {
+        return manageCoreShader(location, DefaultVertexFormat.NEW_ENTITY);
     }
 
     @Override
-    public ManagedCoreShader manageCoreShader(Identifier location, VertexFormat vertexFormat) {
+    public ManagedCoreShader manageCoreShader(ResourceLocation location, VertexFormat vertexFormat) {
         return manageCoreShader(location, vertexFormat, (s) -> {});
     }
 
     @Override
-    public ManagedCoreShader manageCoreShader(Identifier location, VertexFormat vertexFormat, Consumer<ManagedCoreShader> initCallback) {
+    public ManagedCoreShader manageCoreShader(ResourceLocation location, VertexFormat vertexFormat, Consumer<ManagedCoreShader> initCallback) {
         ResettableManagedCoreShader ret = new ResettableManagedCoreShader(location, vertexFormat, initCallback);
         managedShaders.add(ret);
         return ret;
@@ -109,7 +109,7 @@ public final class ReloadableShaderEffectManager implements ShaderEffectManager,
         managedShaders.remove(shader);
     }
 
-    public void reload(ResourceFactory shaderResources) {
+    public void reload(ResourceProvider shaderResources) {
         for (ResettableManagedShaderBase<?> ss : managedShaders) {
             ss.initializeOrLog(shaderResources);
         }
@@ -121,9 +121,9 @@ public final class ReloadableShaderEffectManager implements ShaderEffectManager,
     }
 
     @Override
-    public void onRendererReload(WorldRenderer renderer) {
-        Window window = MinecraftClient.getInstance().getWindow();
-        runShaderSetup(window.getFramebufferWidth(), window.getFramebufferHeight());
+    public void onRendererReload(LevelRenderer renderer) {
+        Window window = Minecraft.getInstance().getWindow();
+        runShaderSetup(window.getWidth(), window.getHeight());
     }
 
     private void runShaderSetup(int newWidth, int newHeight) {

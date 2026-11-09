@@ -17,19 +17,17 @@
  */
 package org.ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.option.GraphicsMode;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
+import net.minecraft.client.GraphicsStatus;
 
 @FunctionalInterface
 public interface PostWorldRenderCallbackV2 {
     /**
      * Fired after Minecraft has rendered everything in the world, before it renders hands, HUDs and GUIs.
      *
-     * <p>{@link net.minecraft.client.gl.PostEffectProcessor}s <strong>must not</strong> be rendered in this callback, as they will prevent
-     * {@link GraphicsMode#FABULOUS fabulous graphics} and other effects from working properly.
+     * <p>{@link net.minecraft.client.renderer.PostChain}s <strong>must not</strong> be rendered in this callback, as they will prevent
+     * {@link GraphicsStatus#FABULOUS fabulous graphics} and other effects from working properly.
      */
     Event<PostWorldRenderCallbackV2> EVENT = EventFactory.createArrayBacked(PostWorldRenderCallbackV2.class,
             (listeners) -> (posingStack, camera, tickDelta) -> {
@@ -40,9 +38,9 @@ public interface PostWorldRenderCallbackV2 {
             });
 
     /**
-     * @param posingStack a blank {@link MatrixStack} that can be used for rendering custom elements
+     * @param posingStack a blank {@link PoseStack} that can be used for rendering custom elements
      * @param camera      the camera from which perspective the world is being rendered
      * @param tickDelta   fraction of time between two consecutive ticks (before 0 and 1)
      */
-    void onWorldRendered(MatrixStack posingStack, Camera camera, float tickDelta);
+    void onWorldRendered(PoseStack posingStack, Camera camera, float tickDelta);
 }

@@ -18,22 +18,22 @@
 package org.ladysnake.satin.mixin.client.blockrenderlayer;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
 import org.ladysnake.satin.impl.BlockRenderLayerRegistry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(RenderLayer.class)
-public abstract class RenderLayerMixin extends RenderPhase {
+@Mixin(RenderType.class)
+public abstract class RenderLayerMixin extends RenderStateShard {
     private RenderLayerMixin() {
         super(null, null, null);
     }
     
     @Inject(
-        method = "getBlockLayers",
+        method = "chunkBufferLayers",
         at = @At("RETURN"),
         cancellable = true
     )

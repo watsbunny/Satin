@@ -17,12 +17,12 @@
  */
 package org.ladysnake.satin.mixin.client.blockrenderlayer;
 
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix4f;
 import org.ladysnake.satin.impl.BlockRenderLayerRegistry;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,37 +33,37 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public abstract class WorldRendererMixin {
 
-    @Shadow protected abstract void renderLayer(RenderLayer renderLayer, double x, double y, double z, Matrix4f matrix4f, Matrix4f positionMatrix);
+    @Shadow protected abstract void renderSectionLayer(RenderType renderLayer, double x, double y, double z, Matrix4f matrix4f, Matrix4f positionMatrix);
 
     //TODO
     @Inject(
-        method = "render",
+        method = "renderLevel",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
             ordinal = 2,
             shift = At.Shift.AFTER
         ),
         slice = @Slice(
             from = @At(
                 value = "INVOKE_STRING",
-                target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V",
+                target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V",
                 args = "ldc=terrain"
             ),
             to = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/render/DimensionEffects;isDarkened()Z"
+                target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;constantAmbientLight()Z"
             )
         ),
         locals = LocalCapture.CAPTURE_FAILSOFT
     )
-    private void renderCustom(RenderTickCounter tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+    private void renderCustom(DeltaTracker tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
         // Render all the custom ones
-        for(RenderLayer layer : BlockRenderLayerRegistry.INSTANCE.getLayers()) {
-            renderLayer(layer, camera.getPos().x, camera.getPos().y, camera.getPos().z, matrix4f, matrix4f2);
+        for(RenderType layer : BlockRenderLayerRegistry.INSTANCE.getLayers()) {
+            renderSectionLayer(layer, camera.getPosition().x, camera.getPosition().y, camera.getPosition().z, matrix4f, matrix4f2);
         }
     }
 

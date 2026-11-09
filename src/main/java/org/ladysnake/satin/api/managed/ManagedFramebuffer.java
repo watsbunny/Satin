@@ -17,20 +17,20 @@
  */
 package org.ladysnake.satin.api.managed;
 
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
-import net.minecraft.client.util.Window;
 import org.apiguardian.api.API;
 import org.ladysnake.satin.api.util.RenderLayerHelper;
 
 import javax.annotation.Nullable;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Window;
 import java.util.function.Consumer;
 
 @API(status = API.Status.EXPERIMENTAL, since = "1.4.0")
 public interface ManagedFramebuffer {
     @Nullable
-    Framebuffer getFramebuffer();
+    RenderTarget getFramebuffer();
 
     /**
      * Begins a write operation on this framebuffer.
@@ -46,11 +46,11 @@ public interface ManagedFramebuffer {
      *
      * @param buffer the framebuffer to copy depth from
      */
-    void copyDepthFrom(Framebuffer buffer);
+    void copyDepthFrom(RenderTarget buffer);
 
     /**
      * Draws this framebuffer, scaling to the default framebuffer's
-     * {@linkplain Window#getFramebufferWidth() width} and {@linkplain Window#getFramebufferHeight() height}.
+     * {@linkplain Window#getWidth() width} and {@linkplain Window#getHeight() height}.
      */
     void draw();
 
@@ -64,12 +64,12 @@ public interface ManagedFramebuffer {
     void clear(boolean swallowErrors);
 
     /**
-     * Gets a simple {@link RenderLayer} that is functionally identical to {@code baseLayer},
-     * but with a different {@link RenderPhase.Target} that binds this framebuffer.
+     * Gets a simple {@link RenderType} that is functionally identical to {@code baseLayer},
+     * but with a different {@link RenderStateShard.OutputStateShard} that binds this framebuffer.
      *
      * @param baseLayer the layer to copy
      * @return a render layer using this framebuffer
-     * @see RenderLayerHelper#copy(RenderLayer, String, Consumer)
+     * @see RenderLayerHelper#copy(RenderType, String, Consumer)
      */
-    RenderLayer getRenderLayer(RenderLayer baseLayer);
+    RenderType getRenderLayer(RenderType baseLayer);
 }

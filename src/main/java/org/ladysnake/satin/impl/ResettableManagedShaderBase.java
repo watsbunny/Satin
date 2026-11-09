@@ -17,9 +17,6 @@
  */
 package org.ladysnake.satin.impl;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
 import org.apiguardian.api.API;
 import org.ladysnake.satin.Satin;
 import org.ladysnake.satin.api.managed.uniform.Uniform1f;
@@ -34,6 +31,9 @@ import org.ladysnake.satin.api.managed.uniform.UniformFinder;
 import org.ladysnake.satin.api.managed.uniform.UniformMat4;
 
 import javax.annotation.CheckForNull;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,19 +46,19 @@ import static org.apiguardian.api.API.Status.INTERNAL;
 
 public abstract class ResettableManagedShaderBase<S extends AutoCloseable> implements UniformFinder {
     /**Location of the shader json definition file*/
-    private final Identifier location;
+    private final ResourceLocation location;
     private final Map<String, ManagedUniform> managedUniforms = new HashMap<>();
     private final List<ManagedUniformBase> allUniforms = new ArrayList<>();
     private boolean errored;
     @CheckForNull
     protected S shader;
 
-    public ResettableManagedShaderBase(Identifier location) {
+    public ResettableManagedShaderBase(ResourceLocation location) {
         this.location = location;
     }
 
     @API(status = INTERNAL)
-    public void initializeOrLog(ResourceFactory mgr) {
+    public void initializeOrLog(ResourceProvider mgr) {
         try {
             this.initialize(mgr);
         } catch (IOException e) {
@@ -69,14 +69,14 @@ public abstract class ResettableManagedShaderBase<S extends AutoCloseable> imple
 
     protected abstract void logInitError(IOException e);
 
-    protected void initialize(ResourceFactory resourceManager) throws IOException {
+    protected void initialize(ResourceProvider resourceManager) throws IOException {
         this.release();
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         this.shader = parseShader(resourceManager, mc, this.location);
-        this.setup(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight());
+        this.setup(mc.getWindow().getWidth(), mc.getWindow().getHeight());
     }
 
-    protected abstract S parseShader(ResourceFactory resourceFactory, MinecraftClient mc, Identifier location) throws IOException;
+    protected abstract S parseShader(ResourceProvider resourceFactory, Minecraft mc, ResourceLocation location) throws IOException;
 
     public void release() {
         if (this.isInitialized()) {
@@ -105,7 +105,7 @@ public abstract class ResettableManagedShaderBase<S extends AutoCloseable> imple
         return this.errored;
     }
 
-    public Identifier getLocation() {
+    public ResourceLocation getLocation() {
         return location;
     }
 

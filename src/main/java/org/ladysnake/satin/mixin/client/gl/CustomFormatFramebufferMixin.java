@@ -17,8 +17,8 @@
  */
 package org.ladysnake.satin.mixin.client.gl;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.GlConst;
-import net.minecraft.client.gl.Framebuffer;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.satin.impl.CustomFormatFramebuffers;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Allows framebuffers to have custom formats. Default is still GL_RGBA8.
  * @see CustomFormatFramebuffers
  */
-@Mixin(Framebuffer.class)
+@Mixin(RenderTarget.class)
 public abstract class CustomFormatFramebufferMixin {
     @Unique
     private int satin$format = GlConst.GL_RGBA8;
@@ -48,9 +48,9 @@ public abstract class CustomFormatFramebufferMixin {
     }
 
     @ModifyArg(
-            method = "initFbo",
+            method = "createBuffers",
             slice = @Slice(
-                    from = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/Framebuffer;setTexFilter(IZ)V"),
+                    from = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;setFilterMode(IZ)V"),
                     to = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/GlStateManager;_glBindFramebuffer(II)V")
             ),
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/GlStateManager;_texImage2D(IIIIIIIILjava/nio/IntBuffer;)V"),

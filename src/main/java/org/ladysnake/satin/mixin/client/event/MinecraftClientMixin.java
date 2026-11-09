@@ -17,8 +17,8 @@
  */
 package org.ladysnake.satin.mixin.client.event;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.Window;
+import com.mojang.blaze3d.platform.Window;
+import net.minecraft.client.Minecraft;
 import org.ladysnake.satin.api.event.ResolutionChangeCallback;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,17 +27,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(MinecraftClient.class)
+@Mixin(Minecraft.class)
 public abstract class MinecraftClientMixin {
 
     @Final
     @Shadow
     private Window window;
 
-    @Inject(method = "onResolutionChanged", at = @At("RETURN"))
+    @Inject(method = "resizeDisplay", at = @At("RETURN"))
     private void hookResolutionChanged(CallbackInfo info) {
-        int width = this.window.getFramebufferWidth();
-        int height = this.window.getFramebufferHeight();
+        int width = this.window.getWidth();
+        int height = this.window.getHeight();
         ResolutionChangeCallback.EVENT.invoker().onResolutionChanged(width, height);
     }
 }
