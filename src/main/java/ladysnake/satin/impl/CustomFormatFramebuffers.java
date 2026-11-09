@@ -17,8 +17,8 @@
  */
 package ladysnake.satin.impl;
 
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.SimpleFramebuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import org.apiguardian.api.API;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
@@ -34,13 +34,13 @@ public class CustomFormatFramebuffers {
     /**
      * Experimental method to create a new framebuffer from code, please open an issue if you actually use it
      *
-     * <p>Refer to {@link SimpleFramebuffer} for the list of parameters
+     * <p>Refer to {@link TextureTarget} for the list of parameters
      */
     @API(status = API.Status.EXPERIMENTAL)
-    public static Framebuffer create(int width, int height, boolean useDepth, boolean getError, TextureFormat format) {
+    public static RenderTarget create(int width, int height, boolean useDepth, boolean getError, TextureFormat format) {
         try {
             FORMAT.set(format);
-            return new SimpleFramebuffer(width, height, useDepth, getError);
+            return new TextureTarget(width, height, useDepth, getError);
         } finally {
             FORMAT.remove();
         }

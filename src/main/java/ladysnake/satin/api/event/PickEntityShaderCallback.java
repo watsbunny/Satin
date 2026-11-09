@@ -17,19 +17,16 @@
  */
 package ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface PickEntityShaderCallback {
     /**
-     * Fired in {@link net.minecraft.client.render.GameRenderer#onCameraEntitySet(Entity)}
+     * Fired in {@link net.minecraft.client.renderer.GameRenderer#checkEntityPostEffect(Entity)}
      */
     Event<PickEntityShaderCallback> EVENT = EventFactory.createArrayBacked(PickEntityShaderCallback.class,
             (listeners) -> (entity, loadShaderFunc, appliedShaderGetter) -> {
@@ -42,5 +39,5 @@ public interface PickEntityShaderCallback {
                 }
             });
 
-    void pickEntityShader(@Nullable Entity entity, Consumer<Identifier> loadShaderFunc, Supplier<PostEffectProcessor> appliedShaderGetter);
+    void pickEntityShader(@Nullable Entity entity, Consumer<ResourceLocation> loadShaderFunc, Supplier<PostChain> appliedShaderGetter);
 }

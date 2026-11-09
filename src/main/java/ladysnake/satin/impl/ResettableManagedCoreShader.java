@@ -18,23 +18,21 @@
 package ladysnake.satin.impl;
 
 import com.google.common.base.Preconditions;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import ladysnake.satin.Satin;
 import ladysnake.satin.api.managed.ManagedCoreShader;
 import ladysnake.satin.api.managed.uniform.SamplerUniform;
-import net.fabricmc.fabric.impl.client.rendering.FabricShaderProgram;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public final class ResettableManagedCoreShader extends ResettableManagedShaderBase<ShaderProgram> implements ManagedCoreShader {
+public final class ResettableManagedCoreShader extends ResettableManagedShaderBase<ShaderInstance> implements ManagedCoreShader {
     /**
      * Callback to run once each time the shader effect is initialized
      */
@@ -43,7 +41,7 @@ public final class ResettableManagedCoreShader extends ResettableManagedShaderBa
     private final VertexFormat vertexFormat;
     private final Map<String, ManagedSamplerUniformV1> managedSamplers = new HashMap<>();
 
-    public ResettableManagedCoreShader(Identifier location, VertexFormat vertexFormat, Consumer<ManagedCoreShader> initCallback) {
+    public ResettableManagedCoreShader(ResourceLocation location, VertexFormat vertexFormat, Consumer<ManagedCoreShader> initCallback) {
         super(location);
         this.vertexFormat = vertexFormat;
         this.initCallback = initCallback;
@@ -54,9 +52,9 @@ public final class ResettableManagedCoreShader extends ResettableManagedShaderBa
     }
 
     @Override
-    protected ShaderProgram parseShader(ResourceFactory resourceManager, MinecraftClient mc, Identifier location) throws IOException {
+    protected ShaderInstance parseShader(ResourceProvider resourceManager, Minecraft mc, ResourceLocation location) throws IOException {
         // Easiest way of getting modded shader locations to work
-        return new FabricShaderProgram(resourceManager, this.getLocation(), this.vertexFormat);
+        return new ShaderInstance(resourceManager, this.getLocation().toString(), this.vertexFormat);
     }
 
     @Override
@@ -69,17 +67,17 @@ public final class ResettableManagedCoreShader extends ResettableManagedShaderBa
     }
 
     @Override
-    public ShaderProgram getProgram() {
+    public ShaderInstance getProgram() {
         return this.shader;
     }
 
     @Override
-    public RenderLayer getRenderLayer(RenderLayer baseLayer) {
+    public RenderType getRenderLayer(RenderType baseLayer) {
         return this.renderLayerSupplier.getRenderLayer(baseLayer);
     }
 
     @Override
-    protected boolean setupUniform(ManagedUniformBase uniform, ShaderProgram shader) {
+    protected boolean setupUniform(ManagedUniformBase uniform, ShaderInstance shader) {
         return uniform.findUniformTarget(shader);
     }
 

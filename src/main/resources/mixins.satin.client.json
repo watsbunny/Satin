@@ -1,7 +1,7 @@
 {
   "required": true,
   "compatibilityLevel": "JAVA_16",
-  "package": "ladysnake.satin.mixin.client",
+  "refmap": "satin.refmap.json",`n  "package": "ladysnake.satin.mixin.client",
   "plugin": "ladysnake.satin.mixin.SatinMixinPlugin",
   "mixins": [
     "AccessiblePassesShaderEffect",

@@ -17,56 +17,56 @@
  */
 package ladysnake.satin.mixin.client.render;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(RenderLayer.class)
-public abstract class RenderLayerMixin extends RenderPhase {
+@Mixin(RenderType.class)
+public abstract class RenderLayerMixin extends RenderStateShard {
     public RenderLayerMixin(String name, Runnable beginAction, Runnable endAction) {
         super(name, beginAction, endAction);
     }
 
-    @Mixin(RenderLayer.MultiPhaseParameters.class)
+    @Mixin(RenderType.CompositeState.class)
     public interface MultiPhaseParametersAccessor {
         @Accessor
-        TextureBase getTexture();
+        EmptyTextureStateShard getTextureState();
 
         @Accessor
-        RenderPhase.ShaderProgram getProgram();
+        RenderStateShard.ShaderStateShard getShaderState();
 
         @Accessor
-        RenderPhase.Transparency getTransparency();
+        RenderStateShard.TransparencyStateShard getTransparencyState();
 
         @Accessor
-        RenderPhase.DepthTest getDepthTest();
+        RenderStateShard.DepthTestStateShard getDepthTestState();
 
         @Accessor
-        RenderPhase.Cull getCull();
+        RenderStateShard.CullStateShard getCullState();
 
         @Accessor
-        RenderPhase.Lightmap getLightmap();
+        RenderStateShard.LightmapStateShard getLightmapState();
 
         @Accessor
-        RenderPhase.Overlay getOverlay();
+        RenderStateShard.OverlayStateShard getOverlayState();
 
         @Accessor
-        RenderPhase.Layering getLayering();
+        RenderStateShard.LayeringStateShard getLayeringState();
 
         @Accessor
-        RenderPhase.Target getTarget();
+        RenderStateShard.OutputStateShard getOutputState();
 
         @Accessor
-        RenderPhase.Texturing getTexturing();
+        RenderStateShard.TexturingStateShard getTexturingState();
 
         @Accessor
-        RenderPhase.WriteMaskState getWriteMaskState();
+        RenderStateShard.WriteMaskStateShard getWriteMaskState();
 
         @Accessor
-        RenderPhase.LineWidth getLineWidth();
+        RenderStateShard.LineStateShard getLineState();
 
         @Accessor
-        RenderLayer.OutlineMode getOutlineMode();
+        RenderType.OutlineProperty getOutlineProperty();
     }
 }

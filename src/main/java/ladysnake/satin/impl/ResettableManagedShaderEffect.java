@@ -18,6 +18,7 @@
 package ladysnake.satin.impl;
 
 import com.google.common.base.Preconditions;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import ladysnake.satin.Satin;
 import ladysnake.satin.api.managed.ManagedFramebuffer;
@@ -26,13 +27,12 @@ import ladysnake.satin.api.managed.ShaderEffectManager;
 import ladysnake.satin.api.managed.uniform.SamplerUniformV2;
 import ladysnake.satin.api.util.ShaderPrograms;
 import ladysnake.satin.mixin.client.AccessiblePassesShaderEffect;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.JsonEffectShaderProgram;
-import net.minecraft.client.gl.PostEffectProcessor;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.EffectInstance;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import org.apiguardian.api.API;
 import org.joml.Matrix4f;
 
@@ -54,7 +54,7 @@ import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
  * @see ManagedShaderEffect
  * @since 1.0.0
  */
-public final class ResettableManagedShaderEffect extends ResettableManagedShaderBase<PostEffectProcessor> implements ManagedShaderEffect {
+public final class ResettableManagedShaderEffect extends ResettableManagedShaderBase<PostChain> implements ManagedShaderEffect {
 
     /**Callback to run once each time the shader effect is initialized*/
     private final Consumer<ManagedShaderEffect> initCallback;
@@ -67,11 +67,11 @@ public final class ResettableManagedShaderEffect extends ResettableManagedShader
      *
      * @param location         the location of a shader effect JSON definition file
      * @param initCallback code to run in {@link #setup(int, int)}
-     * @see ReloadableShaderEffectManager#manage(Identifier)
-     * @see ReloadableShaderEffectManager#manage(Identifier, Consumer)
+     * @see ReloadableShaderEffectManager#manage(ResourceLocation)
+     * @see ReloadableShaderEffectManager#manage(ResourceLocation, Consumer)
      */
     @API(status = INTERNAL)
-    public ResettableManagedShaderEffect(Identifier location, Consumer<ManagedShaderEffect> initCallback) {
+    public ResettableManagedShaderEffect(ResourceLocation location, Consumer<ManagedShaderEffect> initCallback) {
         super(location);
         this.initCallback = initCallback;
         this.managedTargets = new HashMap<>();
@@ -79,24 +79,24 @@ public final class ResettableManagedShaderEffect extends ResettableManagedShader
 
     @Nullable
     @Override
-    public PostEffectProcessor getShaderEffect() {
+    public PostChain getShaderEffect() {
         return getShaderOrLog();
     }
 
     @Override
     public void initialize() throws IOException {
-        super.initialize(MinecraftClient.getInstance().getResourceManager());
+        super.initialize(Minecraft.getInstance().getResourceManager());
     }
 
     @Override
-    protected PostEffectProcessor parseShader(ResourceFactory resourceFactory, MinecraftClient mc, Identifier location) throws IOException {
-        return new PostEffectProcessor(mc.getTextureManager(), mc.getResourceManager(), mc.getFramebuffer(), location);
+    protected PostChain parseShader(ResourceProvider resourceFactory, Minecraft mc, ResourceLocation location) throws IOException {
+        return new PostChain(mc.getTextureManager(), mc.getResourceManager(), mc.getMainRenderTarget(), location);
     }
 
     @Override
     public void setup(int windowWidth, int windowHeight) {
         Preconditions.checkNotNull(shader);
-        this.shader.setupDimensions(windowWidth, windowHeight);
+        this.shader.resize(windowWidth, windowHeight);
 
         for (ManagedUniformBase uniform : this.getManagedUniforms()) {
             setupUniform(uniform, shader);
@@ -114,13 +114,13 @@ public final class ResettableManagedShaderEffect extends ResettableManagedShader
      */
     @Override
     public void render(float tickDelta) {
-        PostEffectProcessor sg = this.getShaderEffect();
+        PostChain sg = this.getShaderEffect();
         if (sg != null) {
             RenderSystem.disableBlend();
             RenderSystem.disableDepthTest();
             RenderSystem.resetTextureMatrix();
-            sg.render(tickDelta);
-            MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
+            sg.process(tickDelta);
+            Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
             RenderSystem.disableBlend();
             RenderSystem.blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // restore blending
             RenderSystem.enableDepthTest();
@@ -222,7 +222,7 @@ public final class ResettableManagedShaderEffect extends ResettableManagedShader
      * {@inheritDoc}
      */
     @Override
-    public void setSamplerUniform(String samplerName, Framebuffer textureFbo) {
+    public void setSamplerUniform(String samplerName, RenderTarget textureFbo) {
         this.findSampler(samplerName).set(textureFbo);
     }
 
@@ -246,15 +246,15 @@ public final class ResettableManagedShaderEffect extends ResettableManagedShader
     public void setupDynamicUniforms(int index, Runnable dynamicSetBlock) {
         AccessiblePassesShaderEffect sg = (AccessiblePassesShaderEffect) this.getShaderEffect();
         if (sg != null) {
-            JsonEffectShaderProgram sm = sg.getPasses().get(index).getProgram();
-            ShaderPrograms.useShader(sm.getGlRef());
+            EffectInstance sm = sg.getPasses().get(index).getEffect();
+            ShaderPrograms.useShader(sm.getId());
             dynamicSetBlock.run();
             ShaderPrograms.useShader(0);
         }
     }
 
     @Override
-    protected boolean setupUniform(ManagedUniformBase uniform, PostEffectProcessor shader) {
+    protected boolean setupUniform(ManagedUniformBase uniform, PostChain shader) {
         return uniform.findUniformTargets(((AccessiblePassesShaderEffect) shader).getPasses());
     }
 
@@ -263,9 +263,9 @@ public final class ResettableManagedShaderEffect extends ResettableManagedShader
         Satin.LOGGER.error("Could not create screen shader {}", this.getLocation(), e);
     }
 
-    private @Nullable PostEffectProcessor getShaderOrLog() {
+    private @Nullable PostChain getShaderOrLog() {
         if (!this.isInitialized() && !this.isErrored()) {
-            this.initializeOrLog(MinecraftClient.getInstance().getResourceManager());
+            this.initializeOrLog(Minecraft.getInstance().getResourceManager());
         }
         return this.shader;
     }

@@ -17,15 +17,15 @@
  */
 package ladysnake.satin.mixin.client.blockrenderlayer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import ladysnake.satin.impl.BlockRenderLayerRegistry;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,36 +35,36 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public abstract class WorldRendererMixin {
-    @Shadow protected abstract void renderLayer(RenderLayer layer, MatrixStack matrix, double x, double y, double z, Matrix4f frustumMatrix);
+    @Shadow protected abstract void renderChunkLayer(RenderType layer, PoseStack matrix, double x, double y, double z, Matrix4f frustumMatrix);
 
     //TODO
     @Inject(
-        method = "render",
+        method = "renderLevel",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDDLorg/joml/Matrix4f;)V",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/PoseStack;DDDLorg/joml/Matrix4f;)V",
             ordinal = 2,
             shift = At.Shift.AFTER
         ),
         slice = @Slice(
             from = @At(
                 value = "INVOKE_STRING",
-                target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V",
+                target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V",
                 args = "ldc=terrain"
             ),
             to = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/render/DimensionEffects;isDarkened()Z"
+                target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;constantAmbientLight()Z"
             )
         ),
         locals = LocalCapture.CAPTURE_FAILSOFT
     )
-    private void renderCustom(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci, Profiler profiler, Vec3d vec3d, double x, double y, double z) {
+    private void renderCustom(PoseStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci, ProfilerFiller profiler, Vec3 vec3d, double x, double y, double z) {
         // Render all the custom ones
-        for(RenderLayer layer : BlockRenderLayerRegistry.INSTANCE.getLayers()) {
-            renderLayer(layer, matrices, x, y, z, positionMatrix);
+        for(RenderType layer : BlockRenderLayerRegistry.INSTANCE.getLayers()) {
+            renderChunkLayer(layer, matrices, x, y, z, positionMatrix);
         }
     }
 

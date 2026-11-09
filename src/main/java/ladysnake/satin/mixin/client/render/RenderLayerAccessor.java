@@ -17,19 +17,19 @@
  */
 package ladysnake.satin.mixin.client.render;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.RenderType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(RenderLayer.class)
+@Mixin(RenderType.class)
 public interface RenderLayerAccessor {
     @Accessor
-    boolean isTranslucent();
+    boolean isSortOnUpload();
 
-    @Invoker("of")
-    static RenderLayer.MultiPhase satin$of(@SuppressWarnings("unused") String name, @SuppressWarnings("unused") VertexFormat vertexFormat, @SuppressWarnings("unused") VertexFormat.DrawMode drawMode, @SuppressWarnings("unused") int expectedBufferSize, @SuppressWarnings("unused") boolean hasCrumbling, @SuppressWarnings("unused") boolean translucent, @SuppressWarnings("unused") RenderLayer.MultiPhaseParameters phases) {
+    @Invoker("create")
+    static RenderType.CompositeRenderType satin$of(@SuppressWarnings("unused") String name, @SuppressWarnings("unused") VertexFormat vertexFormat, @SuppressWarnings("unused") VertexFormat.Mode drawMode, @SuppressWarnings("unused") int expectedBufferSize, @SuppressWarnings("unused") boolean hasCrumbling, @SuppressWarnings("unused") boolean translucent, @SuppressWarnings("unused") RenderType.CompositeState phases) {
         throw new IllegalStateException("Mixin not transformed");
     }
 }

@@ -18,8 +18,8 @@
 package ladysnake.satin.api.util;
 
 import ladysnake.satin.impl.ValidatingShaderLoader;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.apiguardian.api.API;
 
 import javax.annotation.Nullable;
@@ -48,5 +48,5 @@ public interface ShaderLoader {
      * @throws ShaderLinkException if the shader fails to be linked
      */
     @API(status = MAINTAINED)
-    int loadShader(ResourceManager resourceManager, @Nullable Identifier vertexLocation, @Nullable Identifier fragmentLocation) throws IOException;
+    int loadShader(ResourceManager resourceManager, @Nullable ResourceLocation vertexLocation, @Nullable ResourceLocation fragmentLocation) throws IOException;
 }

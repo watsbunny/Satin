@@ -18,17 +18,16 @@
 package ladysnake.satin.mixin.client.gl;
 
 import ladysnake.satin.impl.SamplerAccess;
-import net.minecraft.client.gl.JsonEffectShaderProgram;
-import net.minecraft.client.gl.ShaderStage;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.EffectInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
+import com.mojang.blaze3d.shaders.Program;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntSupplier;
@@ -37,18 +36,18 @@ import java.util.function.IntSupplier;
  * Minecraft does not take into account domains when parsing a shader program.
  * These hooks redirect identifier instantiations to allow specifying a domain for shader files.
  */
-@Mixin(JsonEffectShaderProgram.class)
+@Mixin(EffectInstance.class)
 public abstract class JsonEffectGlShaderMixin implements SamplerAccess {
-    @Shadow @Final private Map<String, IntSupplier> samplerBinds;
+    @Shadow @Final private Map<String, IntSupplier> samplerMap;
 
     @Override
     public void satin$removeSampler(String name) {
-        this.samplerBinds.remove(name);
+        this.samplerMap.remove(name);
     }
 
     @Override
     public boolean satin$hasSampler(String name) {
-        return this.samplerBinds.containsKey(name);
+        return this.samplerMap.containsKey(name);
     }
 
     @Override
@@ -75,17 +74,17 @@ public abstract class JsonEffectGlShaderMixin implements SamplerAccess {
     @Redirect(
             at = @At(
                     value = "NEW",
-                    target = "net/minecraft/util/Identifier",
+                    target = "net/minecraft/resources/ResourceLocation",
                     ordinal = 0
             ),
             method = "<init>"
     )
-    Identifier constructProgramIdentifier(String arg, ResourceManager unused, String id) {
+    ResourceLocation constructProgramIdentifier(String arg, ResourceManager unused, String id) {
         if (!id.contains(":")) {
-            return new Identifier(arg);
+            return new ResourceLocation(arg);
         }
-        Identifier split = new Identifier(id);
-        return new Identifier(split.getNamespace(), "shaders/program/" + split.getPath() + ".json");
+        ResourceLocation split = new ResourceLocation(id);
+        return new ResourceLocation(split.getNamespace(), "shaders/program/" + split.getPath() + ".json");
     }
 
     /**
@@ -96,16 +95,16 @@ public abstract class JsonEffectGlShaderMixin implements SamplerAccess {
     @Redirect(
             at = @At(
                     value = "NEW",
-                    target = "net/minecraft/util/Identifier",
+                    target = "net/minecraft/resources/ResourceLocation",
                     ordinal = 0
             ),
-            method = "loadEffect"
+            method = "getOrCreate"
     )
-    private static Identifier constructProgramIdentifier(String arg, ResourceManager unused, ShaderStage.Type shaderType, String id) {
+    private static ResourceLocation constructProgramIdentifier(String arg, ResourceManager unused, Program.Type shaderType, String id) {
         if (!arg.contains(":")) {
-            return new Identifier(arg);
+            return new ResourceLocation(arg);
         }
-        Identifier split = new Identifier(id);
-        return new Identifier(split.getNamespace(), "shaders/program/" + split.getPath() + shaderType.getFileExtension());
+        ResourceLocation split = new ResourceLocation(id);
+        return new ResourceLocation(split.getNamespace(), "shaders/program/" + split.getPath() + shaderType.getExtension());
     }
 }

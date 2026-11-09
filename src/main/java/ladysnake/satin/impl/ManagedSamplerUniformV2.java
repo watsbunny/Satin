@@ -18,10 +18,9 @@
 package ladysnake.satin.impl;
 
 import ladysnake.satin.api.managed.uniform.SamplerUniformV2;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.JsonEffectShaderProgram;
-import net.minecraft.client.texture.AbstractTexture;
-
+import net.minecraft.client.renderer.EffectInstance;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import java.util.function.IntSupplier;
 
 public final class ManagedSamplerUniformV2 extends ManagedSamplerUniformBase implements SamplerUniformV2 {
@@ -31,12 +30,12 @@ public final class ManagedSamplerUniformV2 extends ManagedSamplerUniformBase imp
 
     @Override
     public void set(AbstractTexture texture) {
-        set(texture::getGlId);
+        set(texture::getId);
     }
 
     @Override
-    public void set(Framebuffer textureFbo) {
-        set(textureFbo::getColorAttachment);
+    public void set(RenderTarget textureFbo) {
+        set(textureFbo::getColorTextureId);
     }
 
     @Override
@@ -54,7 +53,7 @@ public final class ManagedSamplerUniformV2 extends ManagedSamplerUniformBase imp
         SamplerAccess[] targets = this.targets;
         if (targets.length > 0 && this.cachedValue != value) {
             for (SamplerAccess target : targets) {
-                ((JsonEffectShaderProgram) target).bindSampler(this.name, value);
+                ((EffectInstance) target).setSampler(this.name, value);
             }
             this.cachedValue = value;
         }

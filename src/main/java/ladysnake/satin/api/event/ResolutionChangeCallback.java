@@ -17,8 +17,6 @@
  */
 package ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
 
 @FunctionalInterface
 public interface ResolutionChangeCallback {

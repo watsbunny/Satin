@@ -18,16 +18,17 @@
 package ladysnake.satin.api.experimental;
 
 import ladysnake.satin.api.event.PostWorldRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.option.GraphicsMode;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.GraphicsStatus;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.apiguardian.api.API;
 
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+
 /**
- * Implemented by every {@link Framebuffer} when the feature is enabled in the config.
+ * Implemented by every {@link RenderTarget} when the feature is enabled in the config.
  * <p>
  * This allows access to a depth texture that the framebuffer writes to instead of the usual render buffer.
  */
@@ -41,13 +42,13 @@ public interface ReadableDepthFramebuffer {
      * <p>This texture is updated only when {@link #freezeDepthMap()} is called. For the main framebuffer,
      * it is updated automatically right before {@link PostWorldRenderCallback#EVENT} is fired.
      * <strong>Note that the content of the main framebuffer's depth texture depends on the graphic quality setting.</strong>
-     * With {@link GraphicsMode#FABULOUS}, no translucent object will appear on the main depth texture, so consumers may
-     * need to also use the depth textures from the various layers used by the {@link WorldRenderer}'s transparency shader.
+     * With {@link GraphicsStatus#FABULOUS}, no translucent object will appear on the main depth texture, so consumers may
+     * need to also use the depth textures from the various layers used by the {@link LevelRenderer}'s transparency shader.
      *
      * <p>Because this texture is independent from the framebuffer's actual depth texture,
      * it is safe to use anytime (whereas using the actual depth texture may cause corruption if it is simultaneously written to).
      *
-     * <p>The returned value may be -1 if the framebuffer does not have a {@linkplain Framebuffer#useDepthAttachment depth attachment}.
+     * <p>The returned value may be -1 if the framebuffer does not have a {@linkplain RenderTarget#useDepth depth attachment}.
      * This should never be the case for the main framebuffer.
      *
      * @return a still of this framebuffer's depth texture
@@ -56,10 +57,10 @@ public interface ReadableDepthFramebuffer {
     int getStillDepthMap();
 
     /**
-     * Freezes the {@linkplain Framebuffer#getDepthAttachment() current depth texture} for use in
+     * Freezes the {@linkplain RenderTarget#getDepthTextureId() current depth texture} for use in
      * {@link #getStillDepthMap()}.
      * <p>
-     * This is called by default on the {@link MinecraftClient#getFramebuffer() main framebuffer}
+     * This is called by default on the {@link Minecraft#getMainRenderTarget() main framebuffer}
      * once every frame, right before {@link PostWorldRenderCallback} is fired.
      * <p>
      * Calling this method will bind {@code this} framebuffer.

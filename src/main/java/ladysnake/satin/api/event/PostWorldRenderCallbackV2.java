@@ -17,10 +17,8 @@
  */
 package ladysnake.satin.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 
 @FunctionalInterface
 public interface PostWorldRenderCallbackV2 {
@@ -35,5 +33,5 @@ public interface PostWorldRenderCallbackV2 {
                 }
             });
 
-    void onWorldRendered(MatrixStack matrices, Camera camera, float tickDelta, long nanoTime);
+    void onWorldRendered(PoseStack matrices, Camera camera, float tickDelta, long nanoTime);
 }

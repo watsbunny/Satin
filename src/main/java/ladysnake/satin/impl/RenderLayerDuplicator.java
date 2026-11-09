@@ -17,44 +17,43 @@
  */
 package ladysnake.satin.impl;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexFormat;
 import org.jetbrains.annotations.Nullable;
-
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.function.Consumer;
+import net.minecraft.client.renderer.RenderType;
 
 public final class RenderLayerDuplicator {
 
-    public static RenderLayer copy(RenderLayer existing, String newName,  Consumer<RenderLayer.MultiPhaseParameters.Builder> op) {
+    public static RenderType copy(RenderType existing, String newName,  Consumer<RenderType.CompositeState.CompositeStateBuilder> op) {
         return copy(existing, newName, null, op);
     }
 
     /**
      *
-     * @param existing the {@link RenderLayer} to copy
-     * @param newName a unique name for the new {@link RenderLayer}
+     * @param existing the {@link RenderType} to copy
+     * @param newName a unique name for the new {@link RenderType}
      * @param vertexFormat the new vertex format, or {@code null} if {@code existing}'s format should be used
      * @param op the transformation to apply to {@code existing}'s parameters
-     * @return a new {@link RenderLayer} based on {@code existing}
+     * @return a new {@link RenderType} based on {@code existing}
      */
-    public static RenderLayer copy(RenderLayer existing, String newName, @Nullable VertexFormat vertexFormat, Consumer<RenderLayer.MultiPhaseParameters.Builder> op) {
+    public static RenderType copy(RenderType existing, String newName, @Nullable VertexFormat vertexFormat, Consumer<RenderType.CompositeState.CompositeStateBuilder> op) {
         checkDefaultImpl(existing);
         return ((SatinRenderLayer) existing).satin$copy(newName, vertexFormat, op);
     }
 
-    public static RenderLayer.MultiPhaseParameters copyPhaseParameters(RenderLayer existing, Consumer<RenderLayer.MultiPhaseParameters.Builder> op) {
+    public static RenderType.CompositeState copyPhaseParameters(RenderType existing, Consumer<RenderType.CompositeState.CompositeStateBuilder> op) {
         checkDefaultImpl(existing);
         return ((SatinRenderLayer) existing).satin$copyPhaseParameters(op);
     }
 
-    private static void checkDefaultImpl(RenderLayer existing) {
+    private static void checkDefaultImpl(RenderType existing) {
         if (!(existing instanceof SatinRenderLayer)) {
             throw new IllegalArgumentException("Unrecognized RenderLayer implementation " + existing.getClass() + ". Layer duplication is only applicable to the default (MultiPhase) implementation");
         }
     }
 
     public interface SatinRenderLayer {
-        RenderLayer satin$copy(String newName, @Nullable VertexFormat vertexFormat, Consumer<RenderLayer.MultiPhaseParameters.Builder> op);
-        RenderLayer.MultiPhaseParameters satin$copyPhaseParameters(Consumer<RenderLayer.MultiPhaseParameters.Builder> op);
+        RenderType satin$copy(String newName, @Nullable VertexFormat vertexFormat, Consumer<RenderType.CompositeState.CompositeStateBuilder> op);
+        RenderType.CompositeState satin$copyPhaseParameters(Consumer<RenderType.CompositeState.CompositeStateBuilder> op);
     }
 }

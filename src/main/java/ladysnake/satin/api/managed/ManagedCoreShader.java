@@ -18,22 +18,21 @@
 package ladysnake.satin.api.managed;
 
 import ladysnake.satin.api.managed.uniform.UniformFinder;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import org.apiguardian.api.API;
-
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.function.Consumer;
 
 /**
- * @see ShaderEffectManager#manageCoreShader(Identifier) 
- * @see ShaderEffectManager#manageCoreShader(Identifier, VertexFormat, Consumer)
+ * @see ShaderEffectManager#manageCoreShader(ResourceLocation) 
+ * @see ShaderEffectManager#manageCoreShader(ResourceLocation, VertexFormat, Consumer)
  */
 @API(status = API.Status.EXPERIMENTAL, since = "1.6.0")
 public interface ManagedCoreShader extends UniformFinder {
-    ShaderProgram getProgram();
+    ShaderInstance getProgram();
 
     /**
      * Releases this shader's resources.
@@ -46,14 +45,14 @@ public interface ManagedCoreShader extends UniformFinder {
     void release();
 
     /**
-     * Gets a simple {@link RenderLayer} that is functionally identical to {@code baseLayer},
-     * but with a different {@link RenderPhase.Target} that enables this program.
+     * Gets a simple {@link RenderType} that is functionally identical to {@code baseLayer},
+     * but with a different {@link RenderStateShard.OutputStateShard} that enables this program.
      *
-     * <p>The new {@link RenderLayer} will use this shader's vertex format as specified in {@link ShaderEffectManager#manageCoreShader(Identifier, VertexFormat, Consumer)}.
+     * <p>The new {@link RenderType} will use this shader's vertex format as specified in {@link ShaderEffectManager#manageCoreShader(ResourceLocation, VertexFormat, Consumer)}.
      *
      * @param baseLayer the layer to copy
      * @return a render layer using this shader program
-     * @see ladysnake.satin.api.util.RenderLayerHelper#copy(RenderLayer, String, Consumer)
+     * @see ladysnake.satin.api.util.RenderLayerHelper#copy(RenderType, String, Consumer)
      */
-    RenderLayer getRenderLayer(RenderLayer baseLayer);
+    RenderType getRenderLayer(RenderType baseLayer);
 }

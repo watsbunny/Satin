@@ -1,95 +1,76 @@
 plugins {
-    id 'fabric-loom' version "1.0.+"
-    id 'io.github.ladysnake.chenille' version '0.10.2'
-    id 'io.github.juuxel.loom-quiltflower' version "1.8.0"
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
 }
 
-archivesBaseName = project.archives_base_name
-group = project.maven_group
 version = project.mod_version
+group = project.maven_group
 
-chenille {
-    configurePublishing {
-        mainArtifact = remapJar.archiveFile
-        withArtifactory()
-        withCurseforgeRelease()
-        withModrinthRelease()
-        withGithubRelease()
-    }
-
-    license = project.license_header
-    javaVersion = 17
+base {
+    archivesName = project.archives_base_name
 }
 
-sourceSets {
-    testmod {
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
-    }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+repositories {
+    mavenCentral()
 }
 
-loom {
+legacyForge {
+    enable {
+        neoForgeVersion = project.minecraft_version + '-' + project.forge_version
+    }
+
     runs {
-        testmodClient {
+        client {
             client()
-            name = "Testmod Client"
-            source sourceSets.testmod
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
         }
     }
 }
 
-repositories {
-    chenille.repositories {
-        terraformers()
-        modrinth()
-    }
+mixin {
+    add sourceSets.main, 'satin.refmap.json'
+    config 'mixins.satin.client.json'
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modApi "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
-    modCompileOnly ("maven.modrinth:iris:${project.iris_version}")
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    compileOnly 'org.apiguardian:apiguardian-api:1.0.0'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    compileOnly 'org.jetbrains:annotations:18.0.0'
+}
 
-    compileOnly "org.jetbrains:annotations:${jb_annotations_version}"
-    compileOnly "com.google.code.findbugs:jsr305:${findbugs_version}"
-    compileOnly "org.apiguardian:apiguardian-api:${apiguardian_version}"
-
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.0-M1"
-
-    testmodCompileOnly "org.jetbrains:annotations:${jb_annotations_version}"
-    testmodImplementation sourceSets.main.output
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') {
+        expand version: project.version
     }
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/satin.accesswidener")
-}
-
-quiltflower {
-    addToRuntimeClasspath.set(true)
-}
-
-java {
-    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-    // if it is present.
-    // If you remove this line, sources will not be generated.
-    withSourcesJar()
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}"}
-    }
+    manifest.attributes([
+            'MixinConfigs': 'mixins.satin.client.json'
+    ])
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = project.maven_group
+            artifactId = project.archives_base_name
+            version = project.mod_version
+        }
+    }
+}

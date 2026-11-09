@@ -17,11 +17,12 @@
  */
 package ladysnake.satin.api.managed.uniform;
 
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.texture.AbstractTexture;
 import org.apiguardian.api.API;
 
 import static org.apiguardian.api.API.Status.MAINTAINED;
+
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 
 @API(status = MAINTAINED)
 public interface SamplerUniform {
@@ -48,7 +49,7 @@ public interface SamplerUniform {
      * @param textureFbo a framebuffer which main texture will be used
      */
     @API(status = MAINTAINED, since = "1.4.0")
-    void set(Framebuffer textureFbo);
+    void set(RenderTarget textureFbo);
 
     /**
      * Sets the value of a sampler uniform declared in json
