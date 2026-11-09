@@ -33,14 +33,14 @@ public final class SatinMixinPlugin implements IMixinConfigPlugin {
 
     static {
         ModList loader = ModList.get();
-        if (loader.isLoaded("canvas")) {
+        if (loader != null && loader.isLoaded("canvas")) {
             LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
             ALLOW_RENDER_LAYER_MIXINS = false;
-        } else if (loader.isLoaded("iris")) {
+        } else if (loader != null && loader.isLoaded("iris")) {
             LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
             ALLOW_RENDER_LAYER_MIXINS = false;
         } else {
-            if (loader.isLoaded("sodium")) {
+            if (loader != null && loader.isLoaded("sodium")) {
                 LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
             }
             ALLOW_RENDER_LAYER_MIXINS = true;
