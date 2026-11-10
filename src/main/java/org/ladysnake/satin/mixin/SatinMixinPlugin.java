@@ -43,31 +43,37 @@ public final class SatinMixinPlugin implements IMixinConfigPlugin {
         }
 
         boolean allow = true;
-        ModList loaded = ModList.get();
-        if (loaded != null) {
-            if (loaded.isLoaded("canvas")) {
-                LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
-                allow = false;
-            } else if (loaded.isLoaded("iris")) {
-                LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
-                allow = false;
-            } else if (loaded.isLoaded("sodium")) {
-                LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
-            }
-        } else {
-            // Mixin plugin loading happens before ModList is built, but the loading mod list is already populated.
-            LoadingModList loading = LoadingModList.get();
-            if (loading != null) {
-                if (loading.getModFileById("canvas") != null) {
+        try {
+            ModList loaded = ModList.get();
+            if (loaded != null) {
+                if (loaded.isLoaded("canvas")) {
                     LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
                     allow = false;
-                } else if (loading.getModFileById("iris") != null) {
+                } else if (loaded.isLoaded("iris")) {
                     LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
                     allow = false;
-                } else if (loading.getModFileById("sodium") != null) {
+                } else if (loaded.isLoaded("sodium")) {
                     LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
                 }
+            } else {
+                // Mixin plugin loading happens before ModList is built, but the loading mod list is already populated.
+                LoadingModList loading = LoadingModList.get();
+                if (loading != null) {
+                    if (loading.getModFileById("canvas") != null) {
+                        LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
+                        allow = false;
+                    } else if (loading.getModFileById("iris") != null) {
+                        LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
+                        allow = false;
+                    } else if (loading.getModFileById("sodium") != null) {
+                        LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
+                    }
+                }
             }
+        } catch (Throwable t) {
+            // Never let mod detection break mixin loading; without information, disable the risky block layer hooks.
+            LOGGER.warn("[Satin] Could not inspect loaded mods, disabling custom block renders", t);
+            allow = false;
         }
 
         renderLayerMixinsAllowed = allow;
