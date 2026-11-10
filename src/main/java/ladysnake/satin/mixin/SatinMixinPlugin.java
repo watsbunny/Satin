@@ -18,6 +18,7 @@
 package ladysnake.satin.mixin;
 
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.LoadingModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.ClassNode;
@@ -29,22 +30,48 @@ import java.util.Set;
 
 public final class SatinMixinPlugin implements IMixinConfigPlugin {
     private static final Logger LOGGER = LogManager.getLogger("Satin");
-    private static final boolean ALLOW_RENDER_LAYER_MIXINS;
 
-    static {
-        ModList loader = ModList.get();
-        if (loader != null && loader.isLoaded("canvas")) {
-            LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
-            ALLOW_RENDER_LAYER_MIXINS = false;
-        } else if (loader != null && loader.isLoaded("iris")) {
-            LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
-            ALLOW_RENDER_LAYER_MIXINS = false;
-        } else {
-            if (loader != null && loader.isLoaded("sodium")) {
+    /**
+     * Lazily resolved: this plugin can be constructed by Mixin during the early display window setup,
+     * before {@link ModList} has been initialised (ModList.get() returns null at that point).
+     */
+    private static Boolean renderLayerMixinsAllowed;
+
+    private static synchronized boolean renderLayerMixinsAllowed() {
+        if (renderLayerMixinsAllowed != null) {
+            return renderLayerMixinsAllowed;
+        }
+
+        boolean allow = true;
+        ModList loaded = ModList.get();
+        if (loaded != null) {
+            if (loaded.isLoaded("canvas")) {
+                LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
+                allow = false;
+            } else if (loaded.isLoaded("iris")) {
+                LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
+                allow = false;
+            } else if (loaded.isLoaded("sodium")) {
                 LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
             }
-            ALLOW_RENDER_LAYER_MIXINS = true;
+        } else {
+            // Mixin plugin loading happens before ModList is built, but the loading mod list is already populated.
+            LoadingModList loading = LoadingModList.get();
+            if (loading != null) {
+                if (loading.getModFileById("canvas") != null) {
+                    LOGGER.warn("[Satin] Canvas is present, custom block renders will not work");
+                    allow = false;
+                } else if (loading.getModFileById("iris") != null) {
+                    LOGGER.warn("[Satin] Iris is present, custom block renders will not work");
+                    allow = false;
+                } else if (loading.getModFileById("sodium") != null) {
+                    LOGGER.warn("[Satin] Sodium is present, custom block renders may not work");
+                }
+            }
         }
+
+        renderLayerMixinsAllowed = allow;
+        return allow;
     }
 
     @Override
@@ -60,7 +87,7 @@ public final class SatinMixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (mixinClassName.contains("blockrenderlayer")) {
-            return ALLOW_RENDER_LAYER_MIXINS;
+            return renderLayerMixinsAllowed();
         }
         return true;
     }
